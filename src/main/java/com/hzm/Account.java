@@ -5,6 +5,10 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
 
+/**
+ * 展示通过第三方资源调度解决线程死锁的问题
+ * 展示wait() notifyAll()的使用
+ */
 class Tran {
     public static void main(String[] args) throws InterruptedException {
         final Account accountA = new Account(100);
