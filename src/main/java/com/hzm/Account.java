@@ -2,6 +2,7 @@ package com.hzm;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Vector;
 import java.util.concurrent.CountDownLatch;
 
 
@@ -28,6 +29,7 @@ class Tran {
                 countDownLatch.countDown();
             }).start();
         }
+        Vector vector = new Vector<>();
         countDownLatch.await();
         System.out.println(accountA.getBalance());
         System.out.println(accountB.getBalance());
