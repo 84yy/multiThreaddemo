@@ -1,91 +1,86 @@
 package com.hzm.forkjoinpool;
 
 
+import org.junit.Test;
+
+import java.util.Arrays;
 import java.util.concurrent.*;
 
 /**
- * 使用forkjoingpool来实现快速排序
+ *
+ * 使用forkjoingpool来实现归并排序
  */
 @SuppressWarnings("all")
 public class ForkJoinPoolTest4 {
 
-    public static void main(String[] args) throws ExecutionException, InterruptedException {
-        Integer[] integers = {9, 8, 7, 10, 3, 4, 2};
-        SortTask sortTask = new SortTask(integers, 0, integers.length-1);
-        ForkJoinPool forkJoinPool = new ForkJoinPool();
-        forkJoinPool.execute(sortTask);
-        Integer[] sortedArr = sortTask.get();
-        for (Integer integer : sortedArr) {
-            System.out.println(integer);
+    @Test
+    public void mergeSort() {
+        long[] arrs = new long[10000000];
+        for (int i = 0; i < 10000000; i++) {
+            arrs[i] = (long) (Math.random() * 10000000);
         }
+        long startTime = System.currentTimeMillis();
+        ForkJoinPool forkJoinPool = new ForkJoinPool(Runtime.getRuntime().availableProcessors());
+        MergeSort mergeSort = new MergeSort(arrs);
+        arrs = forkJoinPool.invoke(mergeSort);
+        //传统递归
+        //arrs = mergeSort(arrs);
+        long endTime = System.currentTimeMillis();
+        System.out.println("耗时：" + (endTime - startTime));
     }
 
+    /**
+     * fork/join
+     * 耗时：13903ms
+     */
+    class MergeSort extends RecursiveTask<long[]> {
+        long[] arrs;
 
-    static class SortTask extends RecursiveTask<Integer[]> {
-
-        private Integer[] arr;
-        private int begin;
-        private int end;
-
-        public SortTask(Integer[] arr, int begin, int end) {
-            this.arr = arr;
-            this.begin = begin;
-            this.end = end;
+        public MergeSort(long[] arrs) {
+            this.arrs = arrs;
         }
 
         @Override
-        protected Integer[] compute() {
-            if (end - begin <= 2) {
-                if (end - begin == 1) {
-                    Integer[] ints = new Integer[1];
-                    ints[0] = arr[begin];
-                    return ints;
-                } else if (arr[begin] < arr[end]) {
-                    Integer[] ints = new Integer[2];
-                    ints[0] = arr[begin];
-                    ints[1] = arr[end];
-                    return ints;
-                } else {
-                    Integer[] ints = new Integer[2];
-                    ints[0] = arr[end];
-                    ints[1] = arr[begin];
-                    return ints;
-                }
-                //对两个数进行排序
-            } else {
-                int mid = (begin + end) / 2;
-                SortTask leftTask = new SortTask(arr, begin, mid-1);
-                leftTask.fork();
-                SortTask rightTask = new SortTask(arr, mid, end);
-                return merge(rightTask.compute(), leftTask.join());
+        protected long[] compute() {
+            if (arrs.length < 2) {
+                return arrs;
             }
+            int mid = arrs.length / 2;
+            MergeSort left = new MergeSort(Arrays.copyOfRange(arrs, 0, mid));
+            left.fork();
+            MergeSort right = new MergeSort(Arrays.copyOfRange(arrs, mid, arrs.length));
+            return merge(right.compute(), left.join());
         }
+    }
 
-        private Integer[] merge(Integer[] leftArr, Integer[] rightArr) {
-            for (Integer integer : leftArr) {
-                System.out.println("left"+integer);
-            }
-            for (Integer integer : rightArr) {
-                System.out.println("right"+integer);
-            }
-            int totalLength = leftArr.length + rightArr.length;
-            Integer[] mergeArr = new Integer[totalLength];
-            int leftIndex = 0;
-            int rightIndex = 0;
-            for (int i = 0; i < totalLength; i++) {
-                if (leftArr[leftIndex] < rightArr[rightIndex]) {
-                    mergeArr[i] = leftArr[leftIndex];
-                    if (leftArr.length - 1 > leftIndex) {
-                        leftIndex++;
-                    }
-                } else {
-                    mergeArr[i] = rightArr[rightIndex];
-                    if (rightArr.length - 1 > rightIndex) {
-                        rightIndex++;
-                    }
-                }
-            }
-            return mergeArr;
+    /**
+     * 传统递归
+     * 耗时：30508ms
+     */
+    public static long[] mergeSort(long[] arrs) {
+        if (arrs.length < 2) {
+            return arrs;
         }
+        int mid = arrs.length / 2;
+        long[] left = Arrays.copyOfRange(arrs, 0, mid);
+        long[] right = Arrays.copyOfRange(arrs, mid, arrs.length);
+        return merge(mergeSort(left), mergeSort(right));
+    }
+
+    //把两个有序数组合并成一个有序数组
+    public static long[] merge(long[] left, long[] right) {
+        long[] result = new long[left.length + right.length];
+        for (int i = 0, m = 0, j = 0; m < result.length; m++) {
+            if (i >= left.length) {
+                result[m] = right[j++];
+            } else if (j >= right.length) {
+                result[m] = left[i++];
+            } else if (left[i] > right[j]) {
+                result[m] = right[j++];
+            } else {
+                result[m] = left[i++];
+            }
+        }
+        return result;
     }
 }

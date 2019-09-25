@@ -8,9 +8,11 @@ import java.util.concurrent.RecursiveTask;
 
 /**
  *
- * todo 存在下标溢出
+ *
  * 模拟是哟个forkjoinpool来实现统计文章中单次的出现次数
  * 思路: 把整个文章fork成一行行,分别统计该行的单次,把每行的结果join成最终结果
+ *
+ *
  */
 public class ForkJoinPoolTest3 {
    public static void main(String[] args) {
@@ -50,7 +52,18 @@ public class ForkJoinPoolTest3 {
                 MR mr1 = new MR(fc, start, mid);
                 mr1.fork();
                 MR mr2 = new MR(fc, mid, end);
-                // 计算子任务，并返回合并的结果
+
+                /*
+                 * 计算子任务，并返回合并的结果
+                 * 这里可以换另外一种写法
+                 *
+                 *                 invokeAll(mr1,mr2);
+                 *                 mr1.join();
+                 *                 mr2.join();
+                 * 容易踩坑的地方参考: https://www.liaoxuefeng.com/article/1146802219354112
+                 *
+                 *
+                 */
                 return merge(mr2.compute(), mr1.join());
             }
         }
